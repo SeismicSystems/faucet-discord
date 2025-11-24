@@ -1,16 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.30;
 
 /// ============ Imports ============
 
-import "./utils/MultiFaucetTest.sol"; // MultiFaucet ds-test
+import "./utils/SeismicFaucetTest.sol"; // SeismicFaucet ds-test
 
 /// ============ Libraries ============
-
-library URIs {
-    string constant defaultURI = "https://test.com";
-    string constant alternativeURI = "https://alternative.com";
-}
 
 library Errors {
     string constant NotSuperOperator = "Not super operator";
@@ -19,28 +14,17 @@ library Errors {
 
 /// ============ Functionality testing ============
 
-contract Tests is MultiFaucetTest {
-    /// @notice Allow dripping to recipient, if super operator
+contract Tests is SeismicFaucetTest {
+    /// @notice Allow dripping ETH to recipient, if super operator
     function testDrip() public {
-        // Bob before balances
+        // Bob before balance
         uint256 bobETHBalanceBefore = BOB.ETHBalance();
-        uint256 bobDAIBalanceBefore = BOB.DAIBalance();
-        uint256 bobWETHBalanceBefore = BOB.WETHBalance();
-        uint256 bobNFTCountBefore = BOB.NFTBalance();
 
         // Alice drips to bob
         ALICE.drip(address(BOB));
 
-        // Bob after balances
-        assertEq(BOB.ETHBalance(), bobETHBalanceBefore + 5 ether);
-        assertEq(BOB.DAIBalance(), bobDAIBalanceBefore + 5_000e18);
-        assertEq(BOB.WETHBalance(), bobWETHBalanceBefore + 5e18);
-        assertEq(BOB.NFTBalance(), bobNFTCountBefore + 5);
-
-        // Check token uris
-        for (uint256 i = 1; i <= 5; i++) {
-            assertEq(FAUCET.tokenURI(i), URIs.defaultURI);
-        }
+        // Bob after balance - should receive 1 ETH
+        assertEq(BOB.ETHBalance(), bobETHBalanceBefore + 1 ether);
     }
 
     /// @notice Prevent dripping if not approved operator
@@ -101,18 +85,14 @@ contract Tests is MultiFaucetTest {
 
     /// @notice Can drain contract if super operator
     function testCanDrainFaucet() public {
-        // Bob before balances
+        // Bob before balance
         uint256 bobETHBalanceBefore = BOB.ETHBalance();
-        uint256 bobDAIBalanceBefore = BOB.DAIBalance();
-        uint256 bobWETHBalanceBefore = BOB.WETHBalance();
 
         // Alice drains to bob
         ALICE.drain(address(BOB));
 
-        // Bob after balances
+        // Bob after balance - should receive all 100 ETH from faucet
         assertEq(BOB.ETHBalance(), bobETHBalanceBefore + 100 ether);
-        assertEq(BOB.DAIBalance(), bobDAIBalanceBefore + 100_000e18);
-        assertEq(BOB.WETHBalance(), bobWETHBalanceBefore + 100e18);
     }
 
     /// @notice Cannot drain contract if not super operator
@@ -120,54 +100,24 @@ contract Tests is MultiFaucetTest {
         assertErrorFunctionWithAddress(BOB.drain, address(BOB), Errors.NotSuperOperator);
     }
 
-    /// @notice Returns correct number of available drips
+    /// @notice Returns correct number of available ETH drips
     function testCorrectDripCount() public {
-        (uint256 ethDrips, uint256 daiDrips, uint256 wethDrips) = FAUCET.availableDrips();
-        assertEq(ethDrips, 20);
-        assertEq(daiDrips, 20);
-        assertEq(wethDrips, 20);
+        uint256 ethDrips = FAUCET.availableDrips();
+        assertEq(ethDrips, 100); // 100 ETH / 1 ETH per drip = 100 drips
     }
 
-    /// @notice Allows super operator to update collection URI
-    function testAllowsUpdatingURI() public {
-        // Drip to Bob
-        ALICE.drip(address(BOB));
-
-        // Ensure old URI for bobs tokens
-        for (uint256 i = 1; i <= 5; i++) {
-            assertEq(FAUCET.tokenURI(i), URIs.defaultURI);
-        }
-
-        // Update URI
-        ALICE.updateTokenURI(URIs.alternativeURI);
-
-        // Drip to Bob
-        ALICE.drip(address(BOB));
-
-        // Ensure new URI for bobs tokens
-        for (uint256 i = 1; i <= 10; i++) {
-            assertEq(FAUCET.tokenURI(i), URIs.alternativeURI);
-        }
-    }
-
-    /// @notice Allows super operators to update drip amounts
-    function testAllowsUpdatingDripAmounts() public {
-        // Bob before balances
+    /// @notice Allows super operators to update drip amount
+    function testAllowsUpdatingDripAmount() public {
+        // Bob before balance
         uint256 bobETHBalanceBefore = BOB.ETHBalance();
-        uint256 bobDAIBalanceBefore = BOB.DAIBalance();
-        uint256 bobWETHBalanceBefore = BOB.WETHBalance();
-        uint256 bobNFTCountBefore = BOB.NFTBalance();
 
-        // Alice updates drip amounts
-        ALICE.updateDripAmounts(1, 1e18, 1000e18, 1e18);
+        // Alice updates drip amount to 0.5 ETH
+        ALICE.updateDripAmount(0.5 ether);
 
         // Alice drips to bob
         ALICE.drip(address(BOB));
 
-        // Bob after balances
-        assertEq(BOB.ETHBalance(), bobETHBalanceBefore + 1 ether);
-        assertEq(BOB.DAIBalance(), bobDAIBalanceBefore + 1_000e18);
-        assertEq(BOB.WETHBalance(), bobWETHBalanceBefore + 1e18);
-        assertEq(BOB.NFTBalance(), bobNFTCountBefore + 1);
+        // Bob after balance - should receive 0.5 ETH
+        assertEq(BOB.ETHBalance(), bobETHBalanceBefore + 0.5 ether);
     }
 }

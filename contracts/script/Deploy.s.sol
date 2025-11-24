@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Script.sol";
-import "../src/MultiFaucet.sol";
+import "../src/SeismicFaucet.sol";
 
 contract DeployScript is Script {
     function run() external {
@@ -10,11 +10,11 @@ contract DeployScript is Script {
         
         vm.startBroadcast(deployerPrivateKey);
         
-        MultiFaucet faucet = new MultiFaucet();
+        SeismicFaucet faucet = new SeismicFaucet();
         
         vm.stopBroadcast();
         
-        console.log("MultiFaucet deployed to:", address(faucet));
+        console.log("SeismicFaucet deployed to:", address(faucet));
         console.log("Chain ID:", block.chainid);
         console.log("ETH drip amount:", faucet.ETH_AMOUNT());
     }

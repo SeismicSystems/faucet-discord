@@ -6,7 +6,7 @@ pragma solidity ^0.8.30;
 /// @dev Based on Anish Agnihotri's MultiFaucet (https://github.com/Anish-Agnihotri/MultiFaucet)
 /// @dev Pruned down version that drips only ETH instead of multiple tokens
 /// @notice Drips ETH only
-contract MultiFaucet {
+contract SeismicFaucet {
     /// ============ Mutable storage ============
 
     /// @notice ETH to disperse
