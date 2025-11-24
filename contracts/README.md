@@ -1,48 +1,66 @@
-# MultiFaucet
+## Foundry
 
-## About
+**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
-MultiFaucet is a simple [faucet](https://en.wikipedia.org/wiki/History_of_bitcoin#Bitcoin_faucets) that drips `Ether/Matic`, `Wrapped Ether/Wrapped Matic`, `DAI Stablecoin`, and mints ERC721 NFTs to a recipient.
+Foundry consists of:
 
-It enables a super operator to `drip` and `drain` to a recipient, add approved operators, or update the super operator. Approved operators can only `drip` to a recipient.
+- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
+- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
+- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
+- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
 
-## Build and Test
+## Documentation
 
-```bash
-# Collect repo
-git clone https://github.com/anish-agnihotri/MultiFaucet
-cd MultiFaucet/contracts
+https://book.getfoundry.sh/
 
-# Run tests
-make
-make test
+## Usage
+
+### Build
+
+```shell
+$ forge build
 ```
 
-## Installing the toolkit
+### Test
 
-If you do not have DappTools already installed, you'll need to run the commands below:
-
-### Install Nix
-
-```bash
-# User must be in sudoers
-curl -L https://nixos.org/nix/install | sh
-
-# Run this or login again to use Nix
-. "$HOME/.nix-profile/etc/profile.d/nix.sh"
+```shell
+$ forge test
 ```
 
-### Install DappTools
+### Format
 
-```bash
-curl https://dapp.tools/install | sh
+```shell
+$ forge fmt
 ```
 
-## License
+### Gas Snapshots
 
-[GNU Affero GPL v3.0](https://github.com/Anish-Agnihotri/MultiFaucet/blob/master/LICENSE)
+```shell
+$ forge snapshot
+```
 
-## Credits
+### Anvil
 
-- [@gakonst/lootloose](https://github.com/gakonst/lootloose) for DappTools info
-- ds-test, OpenZeppelin for inherited libraries
+```shell
+$ anvil
+```
+
+### Deploy
+
+```shell
+$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+```
+
+### Cast
+
+```shell
+$ cast <subcommand>
+```
+
+### Help
+
+```shell
+$ forge --help
+$ anvil --help
+$ cast --help
+```
