@@ -8,13 +8,13 @@ import "./utils/MultiFaucetTest.sol"; // MultiFaucet ds-test
 /// ============ Libraries ============
 
 library URIs {
-    string constant defaultURI = 'https://test.com';
-    string constant alternativeURI = 'https://alternative.com';
+    string constant defaultURI = "https://test.com";
+    string constant alternativeURI = "https://alternative.com";
 }
 
 library Errors {
-    string constant NotSuperOperator = 'Not super operator';
-    string constant NotApprovedOperator = 'Not approved operator';
+    string constant NotSuperOperator = "Not super operator";
+    string constant NotApprovedOperator = "Not approved operator";
 }
 
 /// ============ Functionality testing ============
@@ -45,11 +45,7 @@ contract Tests is MultiFaucetTest {
 
     /// @notice Prevent dripping if not approved operator
     function testCannotDripIfNotOperator() public {
-        assertErrorFunctionWithAddress(
-            BOB.drip,
-            address(ALICE),
-            Errors.NotApprovedOperator
-        );
+        assertErrorFunctionWithAddress(BOB.drip, address(ALICE), Errors.NotApprovedOperator);
     }
 
     /// @notice Can add approved operator and they can drip
@@ -75,11 +71,7 @@ contract Tests is MultiFaucetTest {
         assertTrue(!FAUCET.approvedOperators(address(BOB)));
 
         // Bob can no longer drip
-        assertErrorFunctionWithAddress(
-            BOB.drip,
-            address(ALICE),
-            Errors.NotApprovedOperator
-        );
+        assertErrorFunctionWithAddress(BOB.drip, address(ALICE), Errors.NotApprovedOperator);
     }
 
     /// @notice Can update super operator
@@ -94,11 +86,7 @@ contract Tests is MultiFaucetTest {
         ALICE.updateSuperOperator(address(ALICE), false);
 
         // Alice can no longer drip
-        assertErrorFunctionWithAddress(
-            ALICE.drip,
-            address(BOB),
-            Errors.NotApprovedOperator
-        );
+        assertErrorFunctionWithAddress(ALICE.drip, address(BOB), Errors.NotApprovedOperator);
 
         // Bob can add Alice to super operators
         BOB.updateApprovedOperator(address(ALICE), true);
@@ -108,14 +96,9 @@ contract Tests is MultiFaucetTest {
         ALICE.drip(address(BOB));
 
         // Alice can still not update super operator
-        assertErrorFunctionWithAddressAndBool(
-            ALICE.updateSuperOperator,
-            address(ALICE),
-            true,
-            Errors.NotSuperOperator
-        );
+        assertErrorFunctionWithAddressAndBool(ALICE.updateSuperOperator, address(ALICE), true, Errors.NotSuperOperator);
     }
-    
+
     /// @notice Can drain contract if super operator
     function testCanDrainFaucet() public {
         // Bob before balances
@@ -134,17 +117,12 @@ contract Tests is MultiFaucetTest {
 
     /// @notice Cannot drain contract if not super operator
     function testCannotDrainIfNotSuperOperator() public {
-        assertErrorFunctionWithAddress(
-            BOB.drain,
-            address(BOB),
-            Errors.NotSuperOperator
-        );
+        assertErrorFunctionWithAddress(BOB.drain, address(BOB), Errors.NotSuperOperator);
     }
 
     /// @notice Returns correct number of available drips
     function testCorrectDripCount() public {
-        (uint256 ethDrips, uint256 daiDrips, uint256 wethDrips)
-            = FAUCET.availableDrips();
+        (uint256 ethDrips, uint256 daiDrips, uint256 wethDrips) = FAUCET.availableDrips();
         assertEq(ethDrips, 20);
         assertEq(daiDrips, 20);
         assertEq(wethDrips, 20);

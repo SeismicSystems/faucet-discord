@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol"; // OZ: ERC721
 /// @author Anish Agnihotri
 /// @notice Drips ETH, DAI, wETH, and mints NFTs
 contract MultiFaucet is ERC721 {
-
     /// ============ Immutable storage ============
 
     /// @notice DAI ERC20 token
@@ -49,10 +48,7 @@ contract MultiFaucet is ERC721 {
     /// @notice Requires sender to be contract approved operator
     modifier isApprovedOperator() {
         // Ensure sender is in approved operators or is super operator
-        require(
-            approvedOperators[msg.sender] || superOperators[msg.sender], 
-            "Not approved operator"
-        );
+        require(approvedOperators[msg.sender] || superOperators[msg.sender], "Not approved operator");
         _;
     }
 
@@ -82,9 +78,7 @@ contract MultiFaucet is ERC721 {
     /// @param _DAI address of DAI contract
     /// @param _WETH address of wETH contract
     /// @param _URI string of token URI
-    constructor(address _DAI, address _WETH, string memory _URI) 
-        ERC721("MultiFaucet NFT", "MFNFT") 
-    {
+    constructor(address _DAI, address _WETH, string memory _URI) ERC721("MultiFaucet NFT", "MFNFT") {
         DAI = IERC20(_DAI);
         WETH = IERC20(_WETH);
         URI = _URI;
@@ -119,9 +113,7 @@ contract MultiFaucet is ERC721 {
     /// @return ethDrips — available Ether drips
     /// @return daiDrips — available DAI drips
     /// @return wethDrips — available wETH drips
-    function availableDrips() public view 
-        returns (uint256 ethDrips, uint256 daiDrips, uint256 wethDrips) 
-    {
+    function availableDrips() public view returns (uint256 ethDrips, uint256 daiDrips, uint256 wethDrips) {
         ethDrips = address(this).balance / ETH_AMOUNT;
         daiDrips = DAI.balanceOf(address(this)) / DAI_AMOUNT;
         wethDrips = WETH.balanceOf(address(this)) / WETH_AMOUNT;
@@ -148,10 +140,7 @@ contract MultiFaucet is ERC721 {
     /// @notice Allows super operator to update approved drip operator status
     /// @param _operator address to update
     /// @param _status of operator to toggle (true == allowed to drip)
-    function updateApprovedOperator(address _operator, bool _status) 
-        external 
-        isSuperOperator 
-    {
+    function updateApprovedOperator(address _operator, bool _status) external isSuperOperator {
         approvedOperators[_operator] = _status;
         emit OperatorUpdated(_operator, _status);
     }
@@ -159,10 +148,7 @@ contract MultiFaucet is ERC721 {
     /// @notice Allows super operator to update super operator
     /// @param _operator address to update
     /// @param _status of operator to toggle (true === is super operator)
-    function updateSuperOperator(address _operator, bool _status) 
-        external
-        isSuperOperator
-    {
+    function updateSuperOperator(address _operator, bool _status) external isSuperOperator {
         superOperators[_operator] = _status;
         emit SuperOperatorUpdated(_operator, _status);
     }
@@ -186,12 +172,10 @@ contract MultiFaucet is ERC721 {
     /// @param _ethAmount ETH to drip
     /// @param _daiAmount DAI to drip
     /// @param _wethAmount wETH to drip
-    function updateDripAmounts(
-        uint256 _nftCount, 
-        uint256 _ethAmount,
-        uint256 _daiAmount,
-        uint256 _wethAmount
-    ) external isSuperOperator {
+    function updateDripAmounts(uint256 _nftCount, uint256 _ethAmount, uint256 _daiAmount, uint256 _wethAmount)
+        external
+        isSuperOperator
+    {
         NFT_COUNT = _nftCount;
         ETH_AMOUNT = _ethAmount;
         DAI_AMOUNT = _daiAmount;

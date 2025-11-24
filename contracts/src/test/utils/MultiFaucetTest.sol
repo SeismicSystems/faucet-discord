@@ -9,7 +9,6 @@ import "./MultiFaucetUser.sol"; // Faucet user
 import "../../MultiFaucet.sol"; // MultiFaucet
 
 contract MultiFaucetTest is DSTestExtended {
-
     /// ============ Storage ============
 
     /// @dev DAI token
@@ -34,7 +33,7 @@ contract MultiFaucetTest is DSTestExtended {
         FAUCET = new MultiFaucet(address(DAI), address(WETH), "https://test.com");
 
         // Fund faucet
-        (bool success, ) = payable(address(FAUCET)).call{value: 100 ether}("");
+        (bool success,) = payable(address(FAUCET)).call{value: 100 ether}("");
         require(success, "Failed funding faucet with ETH");
         DAI.mint(address(FAUCET), 100_000e18);
         WETH.mint(address(FAUCET), 100e18);

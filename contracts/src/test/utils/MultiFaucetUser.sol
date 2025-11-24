@@ -11,15 +11,14 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol"; // OZ: ERC
 /// @author Anish Agnihotri
 /// @notice Mock user to test interacting with MultiFaucet
 contract MultiFaucetUser is ERC721Holder {
-
     /// ============ Immutable storage ============
 
     /// @dev DAI contract
-    IERC20 immutable internal DAI;
+    IERC20 internal immutable DAI;
     /// @dev wETH contract
-    IERC20 immutable internal WETH;
+    IERC20 internal immutable WETH;
     /// @dev Faucet contract
-    MultiFaucet immutable internal FAUCET;
+    MultiFaucet internal immutable FAUCET;
 
     /// ============ Constructor ============
 
@@ -72,10 +71,7 @@ contract MultiFaucetUser is ERC721Holder {
     /// @notice Adds or removes approved operator
     /// @param _operator address
     /// @param _status to update for operator (true == allowed to drip)
-    function updateApprovedOperator(
-        address _operator, 
-        bool _status
-    ) public {
+    function updateApprovedOperator(address _operator, bool _status) public {
         FAUCET.updateApprovedOperator(_operator, _status);
     }
 
@@ -97,18 +93,8 @@ contract MultiFaucetUser is ERC721Holder {
     /// @param _ethAmount ETH to drip
     /// @param _daiAmount DAI to drip
     /// @param _wethAmount wETH to drip
-    function updateDripAmounts(
-        uint256 _nftCount, 
-        uint256 _ethAmount,
-        uint256 _daiAmount,
-        uint256 _wethAmount
-    ) public {
-        FAUCET.updateDripAmounts(
-            _nftCount, 
-            _ethAmount, 
-            _daiAmount, 
-            _wethAmount
-        );
+    function updateDripAmounts(uint256 _nftCount, uint256 _ethAmount, uint256 _daiAmount, uint256 _wethAmount) public {
+        FAUCET.updateDripAmounts(_nftCount, _ethAmount, _daiAmount, _wethAmount);
     }
 
     /// @notice Allows receiving ETH
