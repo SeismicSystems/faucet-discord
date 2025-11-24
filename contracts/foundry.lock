@@ -1,0 +1,8 @@
+{
+  "lib/ds-test": {
+    "rev": "0a5da56b0d65960e6a994d2ec8245e6edd38c248"
+  },
+  "lib/openzeppelin-contracts": {
+    "rev": "9e13852135dc3305bf04acd0b5f232e22e38a5f4"
+  }
+}
