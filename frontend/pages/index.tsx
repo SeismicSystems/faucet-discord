@@ -131,27 +131,27 @@ export default function Home({
           {!session ? (
             // If user is unauthenticated:
             <div className={styles.content__unauthenticated}>
-              {/* Reasoning for Twitter OAuth */}
+              {/* Reasoning for OAuth */}
               <p>
-                To prevent faucet botting, you must sign in with Twitter. We
-                request{" "}
-                <a
-                  href="https://developer.twitter.com/en/docs/apps/app-permissions"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  read-only
-                </a>{" "}
-                access.
+                To prevent faucet botting, you must sign in with Twitter or GitHub. We
+                request read-only access to verify your account.
               </p>
 
-              {/* Sign in with Twitter */}
-              <button
-                className={styles.button__main}
-                onClick={() => signIn("twitter")}
-              >
-                Sign In with Twitter
-              </button>
+              {/* Sign in buttons */}
+              <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
+                <button
+                  className={styles.button__main}
+                  onClick={() => signIn("twitter")}
+                >
+                  Sign In with Twitter
+                </button>
+                <button
+                  className={styles.button__main}
+                  onClick={() => signIn("github")}
+                >
+                  Sign In with GitHub
+                </button>
+              </div>
             </div>
           ) : (
             // If user is authenticated:
@@ -224,7 +224,7 @@ export default function Home({
               {/* General among claimed or unclaimed, allow signing out */}
               <div className={styles.content__twitter}>
                 <button onClick={() => signOut()}>
-                  Sign out @{session.twitter_handle}
+                  Sign out @{session.provider === 'twitter' ? session.twitter_handle : session.github_username}
                 </button>
               </div>
             </div>
@@ -244,13 +244,10 @@ export default function Home({
           <div className={styles.home__card_content_section}>
             <h4>General Information</h4>
             <p>
-              Your Twitter account must have at least 1 Tweet, 15 followers, and
-              be older than 1 month.
+              Sign in with Twitter or GitHub to claim ETH from the faucet. No minimum requirements - just need a valid account.
             </p>
             <p className={styles.home__card_content_section_lh}>
-              By default, the faucet drips on the Ethereum testnets (Rinkeby,
-              Ropsten, Kovan, Görli). You can choose to receive a drip on other
-              networks when requesting tokens.
+              The faucet drips ETH on your configured testnet. Each claim gives you 1 ETH.
             </p>
             <p>You can claim from the faucet once every 24 hours.</p>
           </div>
@@ -424,8 +421,8 @@ export async function getServerSideProps(context: any) {
   return {
     props: {
       session,
-      // If session exists, collect claim status, else return false
-      claimed: session ? await hasClaimed(session.twitter_id) : false,
+      // If session exists, collect claim status using provider-specific ID, else return false
+      claimed: session ? await hasClaimed(session.provider === 'twitter' ? session.twitter_id : session.github_id) : false,
     },
   };
 }

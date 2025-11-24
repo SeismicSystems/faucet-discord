@@ -8,6 +8,11 @@ export default NextAuth({
       clientId: process.env.TWITTER_CLIENT_ID,
       clientSecret: process.env.TWITTER_CLIENT_SECRET,
     }),
+    // GitHub OAuth provider
+    Providers.GitHub({
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    }),
   ],
   // Custom page:
   pages: {
@@ -34,12 +39,23 @@ export default NextAuth({
 
       // If signing in
       if (isSignIn) {
-        // Attach additional parameters (twitter id + handle + anti-bot measures)
-        token.twitter_id = account?.id;
-        token.twitter_handle = profile?.screen_name;
-        token.twitter_num_tweets = profile?.statuses_count;
-        token.twitter_num_followers = profile?.followers_count;
-        token.twitter_created_at = profile?.created_at;
+        if (account?.provider === 'twitter') {
+          // Attach Twitter parameters
+          token.provider = 'twitter';
+          token.twitter_id = account?.id;
+          token.twitter_handle = profile?.screen_name;
+          token.twitter_num_tweets = profile?.statuses_count;
+          token.twitter_num_followers = profile?.followers_count;
+          token.twitter_created_at = profile?.created_at;
+        } else if (account?.provider === 'github') {
+          // Attach GitHub parameters
+          token.provider = 'github';
+          token.github_id = account?.id;
+          token.github_username = profile?.login;
+          token.github_public_repos = profile?.public_repos;
+          token.github_followers = profile?.followers;
+          token.github_created_at = profile?.created_at;
+        }
       }
 
       // Resolve JWT
@@ -47,12 +63,24 @@ export default NextAuth({
     },
     // On session retrieval
     session: async (session, user) => {
-      // Attach additional params from JWT to session
-      session.twitter_id = user.twitter_id;
-      session.twitter_handle = user.twitter_handle;
-      session.twitter_num_tweets = user.twitter_num_tweets;
-      session.twitter_num_followers = user.twitter_num_followers;
-      session.twitter_created_at = user.twitter_created_at;
+      // Attach provider info
+      session.provider = user.provider;
+      
+      if (user.provider === 'twitter') {
+        // Attach Twitter params from JWT to session
+        session.twitter_id = user.twitter_id;
+        session.twitter_handle = user.twitter_handle;
+        session.twitter_num_tweets = user.twitter_num_tweets;
+        session.twitter_num_followers = user.twitter_num_followers;
+        session.twitter_created_at = user.twitter_created_at;
+      } else if (user.provider === 'github') {
+        // Attach GitHub params from JWT to session
+        session.github_id = user.github_id;
+        session.github_username = user.github_username;
+        session.github_public_repos = user.github_public_repos;
+        session.github_followers = user.github_followers;
+        session.github_created_at = user.github_created_at;
+      }
 
       // Resolve session
       return Promise.resolve(session);
