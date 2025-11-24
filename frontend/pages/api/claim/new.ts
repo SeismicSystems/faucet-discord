@@ -16,6 +16,10 @@ const CHRISTIAN_GITHUB_ID = "1449882";
 // Setup whitelist (Ameya)
 const twitterWhitelist: string[] = [AMEYA_TWITTER_ID];
 
+const githubWhitelist: string[] = [AMEYA_GITHUB_ID, CHRISTIAN_GITHUB_ID];
+
+const whitelist: string[] = [...twitterWhitelist, ...githubWhitelist];
+
 // Setup redis client
 const client = new Redis(process.env.REDIS_URL);
 
@@ -260,7 +264,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       await processDrip(wallet, Number(networkId), data);
     } catch (e) {
       // If not whitelisted, force user to wait 15 minutes
-      if (!twitterWhitelist.includes(userId)) {
+      if (!whitelist.includes(userId)) {
         // Update 24h claim status
         await client.set(userId, "true", "EX", 900);
       }
@@ -273,7 +277,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   // If not whitelisted
-  if (!twitterWhitelist.includes(userId)) {
+  if (!whitelist.includes(userId)) {
     // Update 24h claim status
     await client.set(userId, "true", "EX", 86400);
   }
