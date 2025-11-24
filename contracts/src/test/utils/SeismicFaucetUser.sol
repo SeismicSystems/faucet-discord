@@ -6,7 +6,8 @@ pragma solidity ^0.8.30;
 import "../../SeismicFaucet.sol"; // SeismicFaucet
 
 /// @title SeismicFaucetUser
-/// @author Anish Agnihotri
+/// @author Ameya Deshmukh
+/// @dev Based on Anish Agnihotri's MultiFaucetUser (https://github.com/Anish-Agnihotri/MultiFaucet)
 /// @notice Mock user to test interacting with SeismicFaucet
 contract SeismicFaucetUser {
     /// ============ Immutable storage ============

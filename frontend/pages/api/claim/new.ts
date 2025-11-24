@@ -7,8 +7,14 @@ import { getSession } from "next-auth/client"; // Session management
 import { hasClaimed } from "pages/api/claim/status"; // Claim status
 import type { NextApiRequest, NextApiResponse } from "next"; // Types
 
-// Setup whitelist (Anish)
-const whitelist: string[] = ["1078014622525988864"];
+const AMEYA_TWITTER_ID = "1311531128201916417";
+const AMEYA_GITHUB_ID = "74180822";
+
+const CHRISTIAN_GITHUB_ID = "1449882";
+
+
+// Setup whitelist (Ameya)
+const twitterWhitelist: string[] = [AMEYA_TWITTER_ID];
 
 // Setup redis client
 const client = new Redis(process.env.REDIS_URL);
@@ -254,7 +260,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       await processDrip(wallet, Number(networkId), data);
     } catch (e) {
       // If not whitelisted, force user to wait 15 minutes
-      if (!whitelist.includes(userId)) {
+      if (!twitterWhitelist.includes(userId)) {
         // Update 24h claim status
         await client.set(userId, "true", "EX", 900);
       }
@@ -267,7 +273,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   // If not whitelisted
-  if (!whitelist.includes(userId)) {
+  if (!twitterWhitelist.includes(userId)) {
     // Update 24h claim status
     await client.set(userId, "true", "EX", 86400);
   }
