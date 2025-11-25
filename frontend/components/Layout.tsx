@@ -132,7 +132,7 @@ function Footer() {
         >
           MultiFaucet
         </a>{' '}
-        created by {' '}
+        built by {' '}
         <a 
           href="https://github.com/Anish-Agnihotri" 
           target="_blank" 
@@ -141,7 +141,7 @@ function Footer() {
         >
           Anish Agnihotri
         </a>{' '}
-        and the incredible team at{' '}
+        and supported by the incredible team at{' '}
         <a 
           href="https://paradigm.xyz" 
           target="_blank" 
