@@ -41,10 +41,10 @@ function Head() {
       <link rel="shortcut icon" href="/favicon.ico" />
 
       {/* Primary Meta Tags */}
-      <title>Seismic Faucet | Bootstrap your testnet wallet</title>
+      <title>Seismic Faucet | Bootstrap your testnet/devnet wallet</title>
       <meta
         name="title"
-        content="Seismic Faucet | Bootstrap your testnet wallet"
+        content="Seismic Faucet | Bootstrap your testnet/devnet wallet"
       />
       <meta
         name="description"
