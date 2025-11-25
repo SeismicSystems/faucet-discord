@@ -1,4 +1,4 @@
-import styles from "styles/Layout.module.scss"; // Styles
+import styles from "@/styles/Layout.module.scss"; // Styles
 import { default as HTMLHead } from "next/head"; // Meta
 
 // Page layout
@@ -61,7 +61,7 @@ function Head() {
       <link
         rel="preconnect"
         href="https://fonts.gstatic.com"
-        crossOrigin="true"
+        crossOrigin="anonymous"
       />
       <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
@@ -123,16 +123,7 @@ function Footer() {
     <div className={styles.layout__footer}>
       {/* Credits */}
       <p style={{ fontSize: "14px", color: "#666" }}>
-        Built with immense gratitude based on the original{" "}
-        <a
-          href="https://faucet.paradigm.xyz"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "#0070f3", textDecoration: "none" }}
-        >
-          MultiFaucet
-        </a>{" "}
-        built by{" "}
+        We thank{" "}
         <a
           href="https://github.com/Anish-Agnihotri"
           target="_blank"
@@ -141,7 +132,7 @@ function Footer() {
         >
           Anish Agnihotri
         </a>{" "}
-        and supported by the incredible team at{" "}
+        and{" "}
         <a
           href="https://paradigm.xyz"
           target="_blank"
@@ -149,10 +140,18 @@ function Footer() {
           style={{ color: "#0070f3", textDecoration: "none" }}
         >
           Paradigm
-        </a>
-        . Their pioneering work in developer tooling and infrastructure has made
-        projects like this possible. We are deeply thankful for their
-        contributions to the OSS blockchain ecosystem.
+        </a>{" "}
+        for the original{" "}
+        <a
+          href="https://faucet.paradigm.xyz"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "#0070f3", textDecoration: "none" }}
+        >
+          MultiFaucet
+        </a>{" "}
+        that this project is based on, and for their contributions to the OSS
+        blockchain ecosystem.
       </p>
 
       {/* Disclaimer */}

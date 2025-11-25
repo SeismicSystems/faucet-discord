@@ -1,16 +1,11 @@
 import Redis from "ioredis";
 import { WebClient } from "@slack/web-api";
-import {
-  seismicDevnet1,
-  seismicDevnet2,
-  sanvil,
-  seismicTestnet,
-} from "seismic-viem";
-import { getSession } from "next-auth/client";
-import { hasClaimed } from "pages/api/claim/status";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { hasClaimed } from "@/pages/api/claim/status";
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { seismicFaucetAbi } from "utils/contract";
+import { seismicFaucetAbi } from "@/utils/contract";
 import {
   Address,
   encodeFunctionData,
@@ -21,17 +16,19 @@ import {
   isAddress,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { mainNetwork } from "@/utils/networks";
 
 const AMEYA_TWITTER_ID = "1311531128201916417";
 const AMEYA_GITHUB_ID = "74180822";
 const CHRISTIAN_GITHUB_ID = "1449882";
 
-const isDevelopment = process.env.NODE_ENV === "development";
-
 const whitelist = [AMEYA_TWITTER_ID, AMEYA_GITHUB_ID, CHRISTIAN_GITHUB_ID];
 
+const MIN_TWITTER_FOLLOWERS = 50;
+const MIN_GITHUB_FOLLOWERS = 10;
+
 // Setup redis and slack clients
-const client = new Redis(process.env.REDIS_URL);
+const client = new Redis(process.env.REDIS_URL as string);
 const slack = new WebClient(process.env.SLACK_ACCESS_TOKEN);
 const slackChannel = process.env.SLACK_CHANNEL ?? "";
 
@@ -42,12 +39,6 @@ async function postSlackMessage(message: string): Promise<void> {
     link_names: true,
   });
 }
-
-// Network configuration using chain names as keys to avoid ID collision
-const mainNetworks: Chain[] = isDevelopment ? [sanvil] : [seismicTestnet];
-const secondaryNetworks: Chain[] = isDevelopment
-  ? []
-  : [seismicDevnet1, seismicDevnet2];
 
 function generateTxData(recipient: string): `0x${string}` {
   return encodeFunctionData({
@@ -108,7 +99,7 @@ async function processDrip(
       nonce,
     });
   } catch (e: any) {
-    const errorMsg = `@ameya Error dripping for ${chain.name}: ${e.message || String(e)}`;
+    const errorMsg = `Error dripping for ${chain.name}: ${e.message || String(e)}`;
     await postSlackMessage(errorMsg);
 
     // Attempt self-heal by clearing nonce
@@ -120,7 +111,7 @@ async function processDrip(
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
-  const session: any = await getSession({ req });
+  const session: any = await getServerSession(req, res, authOptions);
   const { address, others }: { address: string; others: boolean } = req.body;
 
   if (!session) {
@@ -139,6 +130,26 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(400).send({ error: "Invalid authentication." });
   }
 
+  // Validate Twitter followers
+  if (session.provider === "twitter") {
+    const followerCount = session.twitter_num_followers || 0;
+    if (followerCount < MIN_TWITTER_FOLLOWERS) {
+      return res.status(403).send({
+        error: `Minimum ${MIN_TWITTER_FOLLOWERS} Twitter followers required. You have ${followerCount}.`,
+      });
+    }
+  }
+
+  // Validate GitHub followers
+  if (session.provider === "github") {
+    const followerCount = session.github_followers || 0;
+    if (followerCount < MIN_GITHUB_FOLLOWERS) {
+      return res.status(403).send({
+        error: `Minimum ${MIN_GITHUB_FOLLOWERS} GitHub followers required. You have ${followerCount}.`,
+      });
+    }
+  }
+
   // Validate address
   if (!address || !isAddress(address)) {
     return res.status(400).send({ error: "Invalid address." });
@@ -148,45 +159,50 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   // Check claim status for non-whitelisted users
   if (!isWhitelisted) {
-    const claimed = await hasClaimed(userId);
+    const claimed = await hasClaimed(userId, mainNetwork.name);
     if (claimed) {
-      return res.status(400).send({ error: "Already claimed in 24h window" });
+      return res.status(400).send({
+        error: "Already claimed in 24h window",
+      });
     }
   }
 
   // Create account from private key
   const account = privateKeyToAccount(
-    process.env.OPERATOR_PRIVATE_KEY as `0x${string}`,
+    process.env.FAUCET_PRIVATE_KEY as `0x${string}`,
   );
   const faucetAddress = process.env.FAUCET_ADDRESS as Address;
 
   // Generate transaction data
   const data = generateTxData(address);
 
-  // Determine which networks to claim on
-  const networks = others
-    ? [...mainNetworks, ...secondaryNetworks]
-    : mainNetworks;
-
-  // Process drip for each network
-  for (const chain of networks) {
-    try {
-      await processDrip(account, chain, data, faucetAddress);
-    } catch (e) {
-      // Rate limit non-whitelisted users on error
-      if (!isWhitelisted) {
-        await client.set(userId, "true", "EX", 900); // 15 min cooldown
-      }
-
-      return res.status(500).send({
-        error: "Error fully claiming, try again in 15 minutes.",
-      });
+  // Process drip on main network
+  try {
+    await processDrip(account, mainNetwork, data, faucetAddress);
+  } catch (e) {
+    // Rate limit non-whitelisted users on error
+    if (!isWhitelisted) {
+      await client.set(
+        `faucet:${mainNetwork.name}:${userId}`,
+        "true",
+        "EX",
+        900,
+      ); // 15 min cooldown
     }
+
+    return res.status(500).send({
+      error: "Error claiming, try again in 15 minutes.",
+    });
   }
 
   // Set 24h cooldown for non-whitelisted users
   if (!isWhitelisted) {
-    await client.set(userId, "true", "EX", 86400);
+    await client.set(
+      `faucet:${mainNetwork.name}:${userId}`,
+      "true",
+      "EX",
+      86400,
+    );
   }
 
   if (isWhitelisted) {
