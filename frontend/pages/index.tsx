@@ -102,9 +102,9 @@ export default function Home({
             <Image src="/seismiclogo.png" alt="Seismic Logo" width={200} height={58} />
           </a>
         </div>
-        <h1>Bootstrap your testnet wallet</h1>
+        <h1>Bootstrap your testnet/devnet wallet</h1>
         <span>
-          SeismicFaucet funds your wallet with ETH on your local testnet.
+          This faucet funds your Seismic testnet/devnet wallet.
         </span>
       </div>
 
