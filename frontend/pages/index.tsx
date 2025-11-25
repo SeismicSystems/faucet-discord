@@ -95,11 +95,11 @@ export default function Home({
       <div className={styles.home__cta}>
         <div>
           <a
-            href="https://paradigm.xyz"
+            href="https://seismic.systems"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Image src="/logo.svg" height="42.88px" width="180px" />
+            <Image src="/seismiclogo.png" alt="Seismic Logo" width={200} height={58} />
           </a>
         </div>
         <h1>Bootstrap your testnet wallet</h1>
