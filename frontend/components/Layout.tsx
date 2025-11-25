@@ -90,8 +90,41 @@ function Head() {
 function Footer() {
   return (
     <div className={styles.layout__footer}>
+      {/* Credits */}
+      <p style={{ fontSize: '14px', color: '#666' }}>
+        Built with immense gratitude based on the original{' '}
+        <a 
+          href="https://faucet.paradigm.xyz" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ color: '#0070f3', textDecoration: 'none' }}
+        >
+          MultiFaucet
+        </a>{' '}
+        created by {' '}
+        <a 
+          href="https://github.com/Anish-Agnihotri" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ color: '#0070f3', textDecoration: 'none' }}
+        >
+          Anish Agnihotri
+        </a>{' '}
+        and the incredible team at{' '}
+        <a 
+          href="https://paradigm.xyz" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ color: '#0070f3', textDecoration: 'none' }}
+        >
+          Paradigm
+        </a>. 
+        Their pioneering work in developer tooling and infrastructure has made projects like this possible. 
+        We are deeply thankful for their contributions to the OSS blockchain ecosystem.
+      </p>
+      
       {/* Disclaimer */}
-      <p>
+      <p style={{ marginTop: '20px' }}>
         These smart contracts are being provided as is. No guarantee,
         representation or warranty is being made, express or implied, as to the
         safety or correctness of the user interface or the smart contracts. They
