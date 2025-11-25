@@ -12,6 +12,8 @@ const AMEYA_GITHUB_ID = "74180822";
 
 const CHRISTIAN_GITHUB_ID = "1449882";
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 
 // Setup whitelist (Ameya)
 const twitterWhitelist: string[] = [AMEYA_TWITTER_ID];
@@ -51,19 +53,26 @@ function generateAlchemy(partial: string): string {
 
 // Setup networks
 const ARBITRUM: number = 421611;
-const mainRpcNetworks: Record<number, string> = {
+const localRpcNetworks: Record<number, string> = {
+  31337: "http://127.0.0.1:8545", // `sanvil`
+};
+const productionMainRpcNetworks: Record<number, string> = {
   //3: generateAlchemy("eth-ropsten.alchemyapi.io"),
   4: generateAlchemy("eth-rinkeby.alchemyapi.io"),
   5: generateAlchemy("eth-goerli.alchemyapi.io"),
   42: generateAlchemy("eth-kovan.alchemyapi.io"),
 };
-const secondaryRpcNetworks: Record<number, string> = {
+const productionSecondaryRpcNetworks: Record<number, string> = {
   69: generateAlchemy("opt-kovan.g.alchemy.com"),
   //1287: "https://rpc.api.moonbase.moonbeam.network",
   80001: generateAlchemy("polygon-mumbai.g.alchemy.com"),
   421611: generateAlchemy("arb-rinkeby.g.alchemy.com"),
   //43113: "https://api.avax-test.network/ext/bc/C/rpc",
 };
+
+const mainRpcNetworks: Record<number, string> = isDevelopment ? localRpcNetworks : productionMainRpcNetworks;
+const secondaryRpcNetworks: Record<number, string> = isDevelopment ? localRpcNetworks : productionSecondaryRpcNetworks;
+
 
 // Setup faucet interface
 const iface = new ethers.utils.Interface([
@@ -280,6 +289,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   if (!whitelist.includes(userId)) {
     // Update 24h claim status
     await client.set(userId, "true", "EX", 86400);
+  }
+
+  if (whitelist.includes(userId)) {
+    console.log(`${address} claimed from faucet`);
   }
 
   return res.status(200).send({ claimed: address });

@@ -418,11 +418,30 @@ export async function getServerSideProps(context: any) {
   // Collect session
   const session: any = await getSession(context);
 
+  if (!session) {
+    return {
+      props: {
+        session,
+        claimed: false,
+      },
+    };
+  }
+
+  const userId = session.provider === 'twitter' ? session.twitter_id : session.github_id;
+  
+  // Check if user is whitelisted (same as backend)
+  const AMEYA_GITHUB_ID = "74180822";
+  const CHRISTIAN_GITHUB_ID = "1449882";
+  const AMEYA_TWITTER_ID = "1311531128201916417";
+  
+  const whitelist = [AMEYA_GITHUB_ID, CHRISTIAN_GITHUB_ID, AMEYA_TWITTER_ID];
+  const isWhitelisted = whitelist.includes(userId);
+
   return {
     props: {
       session,
-      // If session exists, collect claim status using provider-specific ID, else return false
-      claimed: session ? await hasClaimed(session.provider === 'twitter' ? session.twitter_id : session.github_id) : false,
+      // If whitelisted, always show as not claimed (can claim anytime)
+      claimed: isWhitelisted ? false : await hasClaimed(userId),
     },
   };
 }
