@@ -23,8 +23,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   if (session) {
     try {
+      // Use provider-specific ID for claim tracking
+      const userId = session.provider === 'twitter' ? session.twitter_id : session.github_id;
       // Collect claim status
-      const claimed: boolean = await hasClaimed(session.twitter_id);
+      const claimed: boolean = await hasClaimed(userId);
       res.status(200).send({ claimed });
     } catch {
       // If failure, return error checking status

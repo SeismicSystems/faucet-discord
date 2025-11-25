@@ -7,8 +7,20 @@ import { getSession } from "next-auth/client"; // Session management
 import { hasClaimed } from "pages/api/claim/status"; // Claim status
 import type { NextApiRequest, NextApiResponse } from "next"; // Types
 
-// Setup whitelist (Anish)
-const whitelist: string[] = ["1078014622525988864"];
+const AMEYA_TWITTER_ID = "1311531128201916417";
+const AMEYA_GITHUB_ID = "74180822";
+
+const CHRISTIAN_GITHUB_ID = "1449882";
+
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+
+// Setup whitelist (Ameya)
+const twitterWhitelist: string[] = [AMEYA_TWITTER_ID];
+
+const githubWhitelist: string[] = [AMEYA_GITHUB_ID, CHRISTIAN_GITHUB_ID];
+
+const whitelist: string[] = [...twitterWhitelist, ...githubWhitelist];
 
 // Setup redis client
 const client = new Redis(process.env.REDIS_URL);
@@ -41,19 +53,26 @@ function generateAlchemy(partial: string): string {
 
 // Setup networks
 const ARBITRUM: number = 421611;
-const mainRpcNetworks: Record<number, string> = {
+const localRpcNetworks: Record<number, string> = {
+  31337: "http://127.0.0.1:8545", // `sanvil`
+};
+const productionMainRpcNetworks: Record<number, string> = {
   //3: generateAlchemy("eth-ropsten.alchemyapi.io"),
   4: generateAlchemy("eth-rinkeby.alchemyapi.io"),
   5: generateAlchemy("eth-goerli.alchemyapi.io"),
   42: generateAlchemy("eth-kovan.alchemyapi.io"),
 };
-const secondaryRpcNetworks: Record<number, string> = {
+const productionSecondaryRpcNetworks: Record<number, string> = {
   69: generateAlchemy("opt-kovan.g.alchemy.com"),
   //1287: "https://rpc.api.moonbase.moonbeam.network",
   80001: generateAlchemy("polygon-mumbai.g.alchemy.com"),
   421611: generateAlchemy("arb-rinkeby.g.alchemy.com"),
   //43113: "https://api.avax-test.network/ext/bc/C/rpc",
 };
+
+const mainRpcNetworks: Record<number, string> = isDevelopment ? localRpcNetworks : productionMainRpcNetworks;
+const secondaryRpcNetworks: Record<number, string> = isDevelopment ? localRpcNetworks : productionSecondaryRpcNetworks;
+
 
 // Setup faucet interface
 const iface = new ethers.utils.Interface([
@@ -174,22 +193,25 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(401).send({ error: "Not authenticated." });
   }
 
-  // Basic anti-bot measures
-  const ONE_MONTH_SECONDS = 2629746;
-  if (
-    // Less than 1 tweet
-    session.twitter_num_tweets == 0 ||
-    // Less than 15 followers
-    session.twitter_num_followers < 15 ||
-    // Less than 1 month old
-    new Date().getTime() -
-      parseTwitterDate(session.twitter_created_at).getTime() <
-      ONE_MONTH_SECONDS
-  ) {
-    // Return invalid Twitter account status
+  // Basic anti-bot measures (relaxed requirements)
+  if (session.provider === 'twitter') {
+    // Relaxed Twitter requirements: just need an account
+    if (!session.twitter_id) {
+      return res
+        .status(400)
+        .send({ error: "Invalid Twitter account." });
+    }
+  } else if (session.provider === 'github') {
+    // GitHub requirements: just need an account
+    if (!session.github_id) {
+      return res
+        .status(400)
+        .send({ error: "Invalid GitHub account." });
+    }
+  } else {
     return res
       .status(400)
-      .send({ error: "Twitter account does not pass anti-bot checks." });
+      .send({ error: "Unsupported authentication provider." });
   }
 
   if (!address || !isValidInput(address)) {
@@ -221,7 +243,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     addr = resolvedAddress;
   }
 
-  const claimed: boolean = await hasClaimed(session.twitter_id);
+  // Use provider-specific ID for claim tracking
+  const userId = session.provider === 'twitter' ? session.twitter_id : session.github_id;
+  const claimed: boolean = await hasClaimed(userId);
   if (claimed) {
     // Return already claimed status
     return res.status(400).send({ error: "Already claimed in 24h window" });
@@ -249,9 +273,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       await processDrip(wallet, Number(networkId), data);
     } catch (e) {
       // If not whitelisted, force user to wait 15 minutes
-      if (!whitelist.includes(session.twitter_id)) {
+      if (!whitelist.includes(userId)) {
         // Update 24h claim status
-        await client.set(session.twitter_id, "true", "EX", 900);
+        await client.set(userId, "true", "EX", 900);
       }
 
       // If error in process, revert
@@ -262,9 +286,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   // If not whitelisted
-  if (!whitelist.includes(session.twitter_id)) {
+  if (!whitelist.includes(userId)) {
     // Update 24h claim status
-    await client.set(session.twitter_id, "true", "EX", 86400);
+    await client.set(userId, "true", "EX", 86400);
+  }
+
+  if (whitelist.includes(userId)) {
+    console.log(`${address} claimed from faucet`);
   }
 
   return res.status(200).send({ claimed: address });
