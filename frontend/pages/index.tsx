@@ -1,6 +1,6 @@
 import axios from "axios"; // Requests
 import Image from "next/image"; // Image
-import { ethers } from "ethers"; // Address check
+import { isAddress } from "viem";
 import { toast } from "react-toastify"; // Toast notifications
 import Layout from "components/Layout"; // Layout wrapper
 import { useRouter } from "next/router"; // Router
@@ -8,39 +8,6 @@ import styles from "styles/Home.module.scss"; // Styles
 import { ReactElement, useState } from "react"; // Local state + types
 import { hasClaimed } from "pages/api/claim/status"; // Claim status
 import { signIn, getSession, signOut } from "next-auth/client"; // Auth
-
-/**
- * Check if a provided address is valid
- * @param {string} address to check
- * @returns {boolean} validity
- */
-function isValidAddress(address: string): boolean {
-  try {
-    // Check if address is valid + checksum match
-    ethers.utils.getAddress(address);
-  } catch {
-    // If not, return false
-    return false;
-  }
-
-  // Else, return true
-  return true;
-}
-
-/**
- * Checks if a provider address or ENS name is valid
- * @param {string} address to check
- * @returns {boolean} validity
- */
-export function isValidInput(address: string): boolean {
-  // Check if ENS name
-  if (~address.toLowerCase().indexOf(".eth")) {
-    return true;
-  }
-
-  // Else, check if valid general address
-  return isValidAddress(address);
-}
 
 export default function Home({
   session,
@@ -64,7 +31,6 @@ export default function Home({
   const [firstClaim, setFirstClaim] = useState<boolean>(false);
   // Loading status
   const [loading, setLoading] = useState<boolean>(false);
-
 
   /**
    * Processes a claim to the faucet
@@ -99,13 +65,16 @@ export default function Home({
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Image src="/seismiclogo.png" alt="Seismic Logo" width={200} height={58} />
+            <Image
+              src="/seismiclogo.png"
+              alt="Seismic Logo"
+              width={200}
+              height={58}
+            />
           </a>
         </div>
         <h1>Bootstrap your testnet/devnet wallet</h1>
-        <span>
-          This faucet funds your Seismic testnet/devnet wallet.
-        </span>
+        <span>This faucet funds your Seismic testnet/devnet wallet.</span>
       </div>
 
       {/* Claim from facuet card */}
@@ -122,12 +91,18 @@ export default function Home({
             <div className={styles.content__unauthenticated}>
               {/* Reasoning for OAuth */}
               <p>
-                To prevent faucet botting, you must sign in with Twitter or GitHub. We
-                request read-only access to verify your account.
+                To prevent faucet botting, you must sign in with Twitter or
+                GitHub. We request read-only access to verify your account.
               </p>
 
               {/* Sign in buttons */}
-              <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "10px",
+                  flexDirection: "column",
+                }}
+              >
                 <button
                   className={styles.button__main}
                   onClick={() => signIn("twitter")}
@@ -167,7 +142,9 @@ export default function Home({
                 // If user has not claimed in 24h
                 <div className={styles.content__unclaimed}>
                   {/* Claim description */}
-                  <p>Enter your Seismic testnet/devnet address to receive tokens:</p>
+                  <p>
+                    Enter your Seismic testnet/devnet address to receive tokens:
+                  </p>
 
                   {/* Address input */}
                   <input
@@ -177,8 +154,7 @@ export default function Home({
                     onChange={(e) => setAddress(e.target.value)}
                   />
 
-
-                  {isValidInput(address) ? (
+                  {isAddress(address) ? (
                     // If address is valid, allow claiming
                     <button
                       className={styles.button__main}
@@ -201,7 +177,10 @@ export default function Home({
               {/* General among claimed or unclaimed, allow signing out */}
               <div className={styles.content__twitter}>
                 <button onClick={() => signOut()}>
-                  Sign out @{session.provider === 'twitter' ? session.twitter_handle : session.github_username}
+                  Sign out @
+                  {session.provider === "twitter"
+                    ? session.twitter_handle
+                    : session.github_username}
                 </button>
               </div>
             </div>
@@ -221,20 +200,20 @@ export default function Home({
           <div className={styles.home__card_content_section}>
             <h4>General Information</h4>
             <p>
-              Sign in with Twitter or GitHub to claim ETH from the faucet. No minimum requirements - just need a valid account.
+              Sign in with Twitter or GitHub to claim ETH from the faucet. No
+              minimum requirements - just need a valid account.
             </p>
             <p className={styles.home__card_content_section_lh}>
-              The faucet drips ETH on your configured testnet. Each claim gives you 1 ETH.
+              The faucet drips ETH on your configured testnet. Each claim gives
+              you 1 ETH.
             </p>
             <p>You can claim from the faucet once every 24 hours.</p>
           </div>
         </div>
-
       </div>
     </Layout>
   );
 }
-
 
 export async function getServerSideProps(context: any) {
   // Collect session
@@ -249,13 +228,14 @@ export async function getServerSideProps(context: any) {
     };
   }
 
-  const userId = session.provider === 'twitter' ? session.twitter_id : session.github_id;
-  
+  const userId =
+    session.provider === "twitter" ? session.twitter_id : session.github_id;
+
   // Check if user is whitelisted (same as backend)
   const AMEYA_GITHUB_ID = "74180822";
   const CHRISTIAN_GITHUB_ID = "1449882";
   const AMEYA_TWITTER_ID = "1311531128201916417";
-  
+
   const whitelist = [AMEYA_GITHUB_ID, CHRISTIAN_GITHUB_ID, AMEYA_TWITTER_ID];
   const isWhitelisted = whitelist.includes(userId);
 
