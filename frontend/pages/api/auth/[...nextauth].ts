@@ -48,9 +48,9 @@ export default NextAuth({
           token.twitter_num_followers = profile?.followers_count;
           token.twitter_created_at = profile?.created_at;
         } else if (account?.provider === 'github') {
-          // Attach GitHub parameters
+          // Attach GitHub parameters - use profile.id which matches the GitHub API user ID
           token.provider = 'github';
-          token.github_id = account?.id;
+          token.github_id = profile?.id?.toString(); // This should be "74180822"
           token.github_username = profile?.login;
           token.github_public_repos = profile?.public_repos;
           token.github_followers = profile?.followers;
