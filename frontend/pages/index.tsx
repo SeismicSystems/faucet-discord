@@ -6,7 +6,6 @@ import Layout from "components/Layout"; // Layout wrapper
 import { useRouter } from "next/router"; // Router
 import styles from "styles/Home.module.scss"; // Styles
 import { ReactElement, useState } from "react"; // Local state + types
-import { getAddressDetails } from "utils/addresses"; // Faucet addresses
 import { hasClaimed } from "pages/api/claim/status"; // Claim status
 import { signIn, getSession, signOut } from "next-auth/client"; // Auth
 
@@ -65,11 +64,7 @@ export default function Home({
   const [firstClaim, setFirstClaim] = useState<boolean>(false);
   // Loading status
   const [loading, setLoading] = useState<boolean>(false);
-  // Claim other
-  const [claimOther, setClaimOther] = useState<boolean>(false);
 
-  // Collect details about addresses
-  const { networkCount, sortedAddresses } = getAddressDetails();
 
   /**
    * Processes a claim to the faucet
@@ -80,7 +75,7 @@ export default function Home({
 
     try {
       // Post new claim with recipient address
-      await axios.post("/api/claim/new", { address, others: claimOther });
+      await axios.post("/api/claim/new", { address });
       // Toast if success + toggle claimed
       toast.success("Tokens dispersed—check balances shortly!");
       setClaimed(true);
@@ -109,13 +104,7 @@ export default function Home({
         </div>
         <h1>Bootstrap your testnet wallet</h1>
         <span>
-          MultiFaucet funds a wallet with{" "}
-          <TokenLogo name="ETH" imageSrc="/tokens/eth.png" />
-          , <TokenLogo name="wETH" imageSrc="/tokens/weth.png" />,
-          <TokenLogo name="DAI" imageSrc="/tokens/dai.svg" />, and{" "}
-          <TokenLogo name="NFTs" imageSrc="/tokens/punks.png" /> across{" "}
-          {`${networkCount} `}
-          testnet networks, at once.
+          SeismicFaucet funds your wallet with ETH on your local testnet.
         </span>
       </div>
 
@@ -167,7 +156,7 @@ export default function Home({
 
                   <input
                     type="text"
-                    placeholder="0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+                    placeholder="0x478669bb3846d79f2ff511ce99eaee8f85554476"
                     disabled
                   />
                   <button className={styles.button__main} disabled>
@@ -183,23 +172,11 @@ export default function Home({
                   {/* Address input */}
                   <input
                     type="text"
-                    placeholder="0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+                    placeholder="0x478669bb3846d79f2ff511ce99eaee8f85554476"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                   />
 
-                  {/* Other networks checkbox */}
-                  <div className={styles.content__unclaimed_others}>
-                    <input
-                      type="checkbox"
-                      value={claimOther.toString()}
-                      onChange={() => setClaimOther((previous) => !previous)}
-                    />
-                    <label>
-                      Drip on additional networks (besides Rinkeby, Ropsten,
-                      Kovan, and Görli)
-                    </label>
-                  </div>
 
                   {isValidInput(address) ? (
                     // If address is valid, allow claiming
@@ -253,166 +230,11 @@ export default function Home({
           </div>
         </div>
 
-        {/* Network details */}
-        {sortedAddresses.map((network) => {
-          // For each network
-          return (
-            <div key={network.network}>
-              <div className={styles.home__card_content_section}>
-                {/* Network name */}
-                <h4>
-                  {network.formattedName}
-                  {network.connectionDetails ? (
-                    <span>
-                      {" "}
-                      (
-                      <a
-                        href={network.connectionDetails}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        connection details
-                      </a>
-                      ,
-                      {network.autoconnect ? (
-                        // Display network add button if non-default network
-                        <AddNetworkButton autoconnect={network.autoconnect} />
-                      ) : null}
-                      )
-                    </span>
-                  ) : null}
-
-                  {/* Optional depleted status */}
-                  {network.depleted ? (
-                    <span className={styles.home__card_depleted}>
-                      {" "}
-                      (maintenance mode)
-                    </span>
-                  ) : null}
-                </h4>
-
-                {/* Optional network disclaimer */}
-                {network.disclaimer ? <span>{network.disclaimer}</span> : null}
-
-                {Object.entries(network.addresses).map(([name, address]) => {
-                  // For each network address
-                  return (
-                    // Address description: address
-                    <p key={name}>
-                      {name}:{" "}
-                      <TokenAddress
-                        etherscanPrefix={network.etherscanPrefix}
-                        name={name}
-                        address={address}
-                        ERC20={name != "NFTs"}
-                      />
-                    </p>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
       </div>
     </Layout>
   );
 }
 
-/**
- * Returns button to add network to MetaMask
- * @param {temp: any} autoconnect details
- * @returns {ReactElement}
- */
-function AddNetworkButton({ autoconnect }: { autoconnect: any }): ReactElement {
-  /**
-   * Adds network to MetaMask
-   */
-  const addToMetaMask = async () => {
-    // @ts-expect-error
-    await window.ethereum.request({
-      method: "wallet_addEthereumChain",
-      params: [autoconnect],
-    });
-  };
-
-  return (
-    <button onClick={addToMetaMask} className={styles.addNetworkButton}>
-      Add to MetaMask
-    </button>
-  );
-}
-
-/**
- * Returns token address component
- * @param {string} etherscanPrefix of address
- * @param {string?} name if displaying MM connect
- * @param {string} address to display
- * @param {string} ERC20 if asset is an ERC20
- * @returns {ReactElement}
- */
-function TokenAddress({
-  etherscanPrefix,
-  name,
-  address,
-  ERC20,
-}: {
-  etherscanPrefix: string;
-  name?: string;
-  address: string;
-  ERC20: boolean;
-}): ReactElement {
-  /**
-   * Adds token to MetaMask
-   */
-  const addToMetaMask = async () => {
-    // @ts-expect-error
-    await window.ethereum.request({
-      method: "wallet_watchAsset",
-      params: {
-        type: "ERC20",
-        options: {
-          address: address,
-          symbol: name,
-          decimals: 18,
-        },
-      },
-    });
-  };
-
-  return (
-    <span className={styles.address}>
-      <a
-        href={`https://${etherscanPrefix}/address/${address}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {ethers.utils.getAddress(address)}
-      </a>
-      {ERC20 ? <button onClick={addToMetaMask}>Add to MetaMask</button> : null}
-    </span>
-  );
-}
-
-/**
- * Returns token logo component
- * @param {string} name of token
- * @param {string} imageSrc of token image
- * @returns {ReactElement}
- */
-function TokenLogo({
-  name,
-  imageSrc,
-}: {
-  name: string;
-  imageSrc: string;
-}): ReactElement {
-  return (
-    <div className={styles.token}>
-      <img src={imageSrc} alt={`${name}`} />
-      <span>{name}</span>
-    </div>
-  );
-}
 
 export async function getServerSideProps(context: any) {
   // Collect session
