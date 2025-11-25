@@ -167,7 +167,7 @@ export default function Home({
                 // If user has not claimed in 24h
                 <div className={styles.content__unclaimed}>
                   {/* Claim description */}
-                  <p>Enter your Ethereum address to receive tokens:</p>
+                  <p>Enter your Seismic testnet/devnet address to receive tokens:</p>
 
                   {/* Address input */}
                   <input
