@@ -11,6 +11,7 @@ import { signIn, signOut } from "next-auth/react"; // Auth
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { mainNetwork } from "@/utils/networks";
+import { whitelist, developerList } from "@/utils/whitelist";
 
 export default function Home({
   session,
@@ -44,9 +45,16 @@ export default function Home({
 
     try {
       // Post new claim with recipient address
-      await axios.post("/api/claim/new", { address });
-      // Toast if success + toggle claimed
-      toast.success("Tokens dispersed—check balances shortly!");
+      const response = await axios.post("/api/claim/new", { address });
+      // Toast if success + toggle claimed based on tier
+      const tier = response.data.tier;
+      if (tier === "whitelist") {
+        toast.success("You are whitelisted!! 🎉 Dripping 10 ETH...");
+      } else if (tier === "developer") {
+        toast.success("Developer access! 🛠️ Dripping 2 ETH...");
+      } else {
+        toast.success("Tokens dispersed—check balances shortly!");
+      }
       setClaimed(true);
       setFirstClaim(true);
     } catch (error: any) {
@@ -239,11 +247,6 @@ export async function getServerSideProps(context: any) {
     session.provider === "twitter" ? session.twitter_id : session.github_id;
 
   // Check if user is whitelisted (same as backend)
-  const AMEYA_GITHUB_ID = "74180822";
-  const CHRISTIAN_GITHUB_ID = "1449882";
-  const AMEYA_TWITTER_ID = "1311531128201916417";
-
-  const whitelist = [AMEYA_GITHUB_ID, CHRISTIAN_GITHUB_ID, AMEYA_TWITTER_ID];
   const isWhitelisted = whitelist.includes(userId);
 
   // If whitelisted, always show as not claimed

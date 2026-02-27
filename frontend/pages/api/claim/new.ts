@@ -17,12 +17,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { mainNetwork } from "@/utils/networks";
-
-const AMEYA_TWITTER_ID = "1311531128201916417";
-const AMEYA_GITHUB_ID = "74180822";
-const CHRISTIAN_GITHUB_ID = "1449882";
-
-const whitelist = [AMEYA_TWITTER_ID, AMEYA_GITHUB_ID, CHRISTIAN_GITHUB_ID];
+import { whitelist, developerList } from "@/utils/whitelist";
 
 const MIN_TWITTER_FOLLOWERS = 50;
 const MIN_GITHUB_FOLLOWERS = 10;
@@ -40,10 +35,18 @@ async function postSlackMessage(message: string): Promise<void> {
   });
 }
 
-function generateTxData(recipient: string): `0x${string}` {
+type UserTier = "whitelist" | "developer" | "regular";
+
+function generateTxData(recipient: string, tier: UserTier): `0x${string}` {
+  const functionName = tier === "whitelist" 
+    ? "dripWhitelist" 
+    : tier === "developer" 
+      ? "dripDeveloper" 
+      : "drip";
+  
   return encodeFunctionData({
     abi: seismicFaucetAbi,
-    functionName: "drip",
+    functionName,
     args: [recipient as Address],
   });
 }
@@ -73,6 +76,10 @@ async function processDrip(
   data: `0x${string}`,
   faucetAddress: Address,
 ): Promise<void> {
+  console.log(`[processDrip] Starting drip on chain: ${chain.name}`);
+  console.log(`[processDrip] Faucet address: ${faucetAddress}`);
+  console.log(`[processDrip] TX data: ${data}`);
+
   const publicClient = createPublicClient({
     chain,
     transport: http(),
@@ -87,18 +94,23 @@ async function processDrip(
   const nonce = await getNonceForChain(chain, account.address);
   const gasPrice = await publicClient.getGasPrice();
 
+  console.log(`[processDrip] Nonce: ${nonce}, Gas price: ${gasPrice}`);
+
   // Update nonce in redis with 5m TTL
   await client.set(`nonce-${chain.name}`, nonce + 1, "EX", 300);
 
   try {
-    await walletClient.sendTransaction({
+    console.log(`[processDrip] Sending transaction...`);
+    const txHash = await walletClient.sendTransaction({
       to: faucetAddress,
       data,
       gasPrice: gasPrice * BigInt(2),
       gas: BigInt(500_000),
       nonce,
     });
+    console.log(`[processDrip] Transaction sent! Hash: ${txHash}`);
   } catch (e: any) {
+    console.error(`[processDrip] ERROR: ${e.message || String(e)}`);
     const errorMsg = `Error dripping for ${chain.name}: ${e.message || String(e)}`;
     await postSlackMessage(errorMsg);
 
@@ -111,10 +123,15 @@ async function processDrip(
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
+  console.log(`[claim/new] === New claim request ===`);
   const session: any = await getServerSession(req, res, authOptions);
   const { address, others }: { address: string; others: boolean } = req.body;
 
+  console.log(`[claim/new] Address: ${address}`);
+  console.log(`[claim/new] Session provider: ${session?.provider}`);
+
   if (!session) {
+    console.log(`[claim/new] No session - returning 401`);
     return res.status(401).send({ error: "Not authenticated." });
   }
 
@@ -126,12 +143,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         ? session.github_id
         : null;
 
+  console.log(`[claim/new] User ID: ${userId}`);
+
   if (!userId) {
+    console.log(`[claim/new] No userId - returning 400`);
     return res.status(400).send({ error: "Invalid authentication." });
   }
 
-  // Validate Twitter followers
-  if (session.provider === "twitter") {
+  // Determine user tier
+  const isWhitelisted = whitelist.includes(userId);
+  const isDeveloper = developerList.includes(userId);
+  const tier: UserTier = isWhitelisted ? "whitelist" : isDeveloper ? "developer" : "regular";
+  console.log(`[claim/new] User tier: ${tier}`);
+
+  // Validate Twitter followers (skip for whitelisted and developer users)
+  if (tier === "regular" && session.provider === "twitter") {
     const followerCount = session.twitter_num_followers || 0;
     if (followerCount < MIN_TWITTER_FOLLOWERS) {
       return res.status(403).send({
@@ -140,8 +166,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     }
   }
 
-  // Validate GitHub followers
-  if (session.provider === "github") {
+  // Validate GitHub followers (skip for whitelisted and developer users)
+  if (tier === "regular" && session.provider === "github") {
     const followerCount = session.github_followers || 0;
     if (followerCount < MIN_GITHUB_FOLLOWERS) {
       return res.status(403).send({
@@ -155,10 +181,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(400).send({ error: "Invalid address." });
   }
 
-  const isWhitelisted = whitelist.includes(userId);
-
-  // Check claim status for non-whitelisted users
-  if (!isWhitelisted) {
+  // Check claim status for non-whitelisted users (developers have 24h cooldown too)
+  if (tier !== "whitelist") {
     const claimed = await hasClaimed(userId, mainNetwork.name);
     if (claimed) {
       return res.status(400).send({
@@ -173,15 +197,23 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   );
   const faucetAddress = process.env.FAUCET_ADDRESS as Address;
 
-  // Generate transaction data
-  const data = generateTxData(address);
+  console.log(`[claim/new] Operator address: ${account.address}`);
+  console.log(`[claim/new] Faucet contract: ${faucetAddress}`);
+
+  // Generate transaction data based on tier
+  const functionName = tier === "whitelist" ? "dripWhitelist" : tier === "developer" ? "dripDeveloper" : "drip";
+  console.log(`[claim/new] Using function: ${functionName}`);
+  const data = generateTxData(address, tier);
 
   // Process drip on main network
+  console.log(`[claim/new] Processing drip on ${mainNetwork.name}...`);
   try {
     await processDrip(account, mainNetwork, data, faucetAddress);
-  } catch (e) {
-    // Rate limit non-whitelisted users on error
-    if (!isWhitelisted) {
+    console.log(`[claim/new] Drip successful!`);
+  } catch (e: any) {
+    console.error(`[claim/new] Drip failed: ${e.message || String(e)}`);
+    // Rate limit non-whitelisted users on error (includes developers)
+    if (tier !== "whitelist") {
       await client.set(
         `faucet:${mainNetwork.name}:${userId}`,
         "true",
@@ -195,8 +227,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     });
   }
 
-  // Set 24h cooldown for non-whitelisted users
-  if (!isWhitelisted) {
+  // Set 24h cooldown for non-whitelisted users (includes developers)
+  if (tier !== "whitelist") {
     await client.set(
       `faucet:${mainNetwork.name}:${userId}`,
       "true",
@@ -205,9 +237,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     );
   }
 
-  if (isWhitelisted) {
-    console.log(`${address} claimed from faucet`);
-  }
+  console.log(`[claim/new] ${address} claimed from faucet (tier: ${tier})`);
 
-  return res.status(200).send({ claimed: address });
+  return res.status(200).send({ claimed: address, tier });
 };

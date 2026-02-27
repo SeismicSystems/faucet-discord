@@ -120,4 +120,124 @@ contract Tests is SeismicFaucetTest {
         // Bob after balance - should receive 0.5 ETH
         assertEq(BOB.ETHBalance(), bobETHBalanceBefore + 0.5 ether);
     }
+
+    /// @notice Allow dripping developer ETH amount to recipient, if super operator
+    function testDripDeveloper() public {
+        // Bob before balance
+        uint256 bobETHBalanceBefore = BOB.ETHBalance();
+
+        // Alice drips developer amount to bob
+        ALICE.dripDeveloper(address(BOB));
+
+        // Bob after balance - should receive 2 ETH (default developer amount)
+        assertEq(BOB.ETHBalance(), bobETHBalanceBefore + 2 ether);
+    }
+
+    /// @notice Prevent developer dripping if not approved operator
+    function testCannotDripDeveloperIfNotOperator() public {
+        assertErrorFunctionWithAddress(BOB.dripDeveloper, address(ALICE), Errors.NotApprovedOperator);
+    }
+
+    /// @notice Approved operator can drip developer amount
+    function testApprovedOperatorCanDripDeveloper() public {
+        // Alice adds Bob as approved operator
+        ALICE.updateApprovedOperator(address(BOB), true);
+
+        // Alice before balance
+        uint256 aliceETHBalanceBefore = ALICE.ETHBalance();
+
+        // Bob drips developer amount to Alice
+        BOB.dripDeveloper(address(ALICE));
+
+        // Alice after balance - should receive 2 ETH
+        assertEq(ALICE.ETHBalance(), aliceETHBalanceBefore + 2 ether);
+    }
+
+    /// @notice Allows super operators to update developer drip amount
+    function testAllowsUpdatingDeveloperDripAmount() public {
+        // Bob before balance
+        uint256 bobETHBalanceBefore = BOB.ETHBalance();
+
+        // Alice updates developer drip amount to 3 ETH
+        ALICE.updateDeveloperDripAmount(3 ether);
+
+        // Verify the amount was updated
+        assertEq(FAUCET.DEVELOPER_ETH_AMOUNT(), 3 ether);
+
+        // Alice drips developer amount to bob
+        ALICE.dripDeveloper(address(BOB));
+
+        // Bob after balance - should receive 3 ETH
+        assertEq(BOB.ETHBalance(), bobETHBalanceBefore + 3 ether);
+    }
+
+    /// @notice Non-super operator cannot update developer drip amount
+    function testCannotUpdateDeveloperDripAmountIfNotSuperOperator() public {
+        assertErrorFunctionWithUint256(BOB.updateDeveloperDripAmount, 3 ether, Errors.NotSuperOperator);
+    }
+
+    /// @notice Default developer ETH amount is 2 ETH
+    function testDefaultDeveloperAmount() public {
+        assertEq(FAUCET.DEVELOPER_ETH_AMOUNT(), 2 ether);
+    }
+
+    /// @notice Allow dripping whitelist ETH amount to recipient, if super operator
+    function testDripWhitelist() public {
+        // Bob before balance
+        uint256 bobETHBalanceBefore = BOB.ETHBalance();
+
+        // Alice drips whitelist amount to bob
+        ALICE.dripWhitelist(address(BOB));
+
+        // Bob after balance - should receive 10 ETH (default whitelist amount)
+        assertEq(BOB.ETHBalance(), bobETHBalanceBefore + 10 ether);
+    }
+
+    /// @notice Prevent whitelist dripping if not approved operator
+    function testCannotDripWhitelistIfNotOperator() public {
+        assertErrorFunctionWithAddress(BOB.dripWhitelist, address(ALICE), Errors.NotApprovedOperator);
+    }
+
+    /// @notice Approved operator can drip whitelist amount
+    function testApprovedOperatorCanDripWhitelist() public {
+        // Alice adds Bob as approved operator
+        ALICE.updateApprovedOperator(address(BOB), true);
+
+        // Bob before balance (we'll drip to Alice)
+        uint256 aliceETHBalanceBefore = ALICE.ETHBalance();
+
+        // Bob drips whitelist amount to Alice
+        BOB.dripWhitelist(address(ALICE));
+
+        // Alice after balance - should receive 10 ETH
+        assertEq(ALICE.ETHBalance(), aliceETHBalanceBefore + 10 ether);
+    }
+
+    /// @notice Allows super operators to update whitelist drip amount
+    function testAllowsUpdatingWhitelistDripAmount() public {
+        // Bob before balance
+        uint256 bobETHBalanceBefore = BOB.ETHBalance();
+
+        // Alice updates whitelist drip amount to 5 ETH
+        ALICE.updateWhitelistDripAmount(5 ether);
+
+        // Verify the amount was updated
+        assertEq(FAUCET.WHITELIST_ETH_AMOUNT(), 5 ether);
+
+        // Alice drips whitelist amount to bob
+        ALICE.dripWhitelist(address(BOB));
+
+        // Bob after balance - should receive 5 ETH
+        assertEq(BOB.ETHBalance(), bobETHBalanceBefore + 5 ether);
+    }
+
+    /// @notice Non-super operator cannot update whitelist drip amount
+    function testCannotUpdateWhitelistDripAmountIfNotSuperOperator() public {
+        assertErrorFunctionWithUint256(BOB.updateWhitelistDripAmount, 5 ether, Errors.NotSuperOperator);
+    }
+
+    /// @notice Default whitelist ETH amount is 10 ETH
+    function testDefaultWhitelistAmount() public {
+        assertEq(FAUCET.WHITELIST_ETH_AMOUNT(), 10 ether);
+    }
 }
