@@ -4,21 +4,20 @@
 
 // Seismic team GitHub IDs
 const SEISMIC_TEAM = [
-  "74180822",   // Ameya Deshmukh (@ameya-deshmukh)
-  "1449882",    // Christian Drappi (@cdrappi)
-  "25928722",   // Matthias Wright (@matthias-wright)
-  "71679972",   // Dalton Coder (@daltoncoder)
-  "30359739",   // Lyron Co Ting Keh (@lyronctk)
-  "57149625",   // Matt Haines (@mHaines9219)
-  "9342524",    // Sam Laferriere (@samlaf)
+  "74180822", // Ameya Deshmukh (@ameya-deshmukh)
+  "1449882", // Christian Drappi (@cdrappi)
+  "25928722", // Matthias Wright (@matthias-wright)
+  "71679972", // Dalton Coder (@daltoncoder)
+  "30359739", // Lyron Co Ting Keh (@lyronctk)
+  "57149625", // Matt Haines (@mHaines9219)
+  "9342524", // Sam Laferriere (@samlaf)
 ];
 
 // Brookwell team GitHub IDs
 const BROOKWELL_TEAM = [
-  "8132955",    // Ravi Riley (@raviriley)
-  "51090093",   // Rohan Patra (@rohan-patra)
+  "8132955", // Ravi Riley (@raviriley)
+  "51090093", // Rohan Patra (@rohan-patra)
 ];
-
 
 // Twitter IDs for whitelist
 const TWITTER_WHITELIST = [
@@ -27,20 +26,19 @@ const TWITTER_WHITELIST = [
 
 // Chainlink team GitHub IDs
 const CHAINLINK_TEAM = [
-  "2430254",    // Todor Karaivanov (@tkaraivanov)
-  "164586642",  // Felix Medina (@femedmad)
+  "2430254", // Todor Karaivanov (@tkaraivanov)
+  "164586642", // Felix Medina (@femedmad)
 ];
 
 // Pimlico team GitHub IDs
 const PIMLICO_TEAM = [
-  "97399882",   // mous (@mouseless0x)
+  "97399882", // mous (@mouseless0x)
 ];
 
 // Ankr team Github IDs
 const ANKR_TEAM = [
   "24973480", // Finn (@guiltylotus)
-  "165103466" // Felip (@fr-automator)
-
+  "165103466", // Felip (@fr-automator)
 ];
 
 /*
@@ -50,9 +48,14 @@ const DEVELOPERS = [
   "158461935", // Dave Thompson (@Davethompson01)
 ];
 
-
 // Twitter IDs for developers
 const TWITTER_DEVELOPERS: string[] = [];
+
+// Discord IDs for whitelist
+const DISCORD_WHITELIST: string[] = [];
+
+// Discord IDs for developers
+const DISCORD_DEVELOPERS: string[] = [];
 
 /*
  * EXPORTS
@@ -66,9 +69,8 @@ export const whitelist = [
   ...PIMLICO_TEAM,
   ...ANKR_TEAM,
   ...TWITTER_WHITELIST,
+  ...DISCORD_WHITELIST,
 ];
 
 // Developers: elevated access (2 ETH, 24h cooldown)
-export const developerList = [
-  ...DEVELOPERS,
-];
+export const developerList = [...DEVELOPERS, ...DISCORD_DEVELOPERS];
