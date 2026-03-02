@@ -102,8 +102,7 @@ export default function Home({
             <div className={styles.content__unauthenticated}>
               {/* Reasoning for OAuth */}
               <p>
-                To prevent faucet botting, you must sign in with Twitter/X,
-                GitHub, or Discord. We request read-only access to verify your
+                To prevent faucet botting, you must sign in with Discord and have a magnitude role of 5 or higher. We request read-only access to verify your
                 account.
               </p>
 
@@ -220,9 +219,8 @@ export default function Home({
           <div className={styles.home__card_content_section}>
             <h4>General Information</h4>
             <p>
-              Sign in with Twitter, GitHub, or Discord to claim ETH from the
-              faucet. Twitter requires 50+ followers, GitHub requires 10+
-              followers. Discord requires membership in the Seismic server with
+              Sign in with Discord to claim ETH from the
+              faucet. Discord requires membership in the Seismic server with
               a magnitude role of 5 or higher.
             </p>
             <p className={styles.home__card_content_section_lh}>
