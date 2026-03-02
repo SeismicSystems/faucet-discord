@@ -115,7 +115,7 @@ export default function Home({
                   flexDirection: "column",
                 }}
               >
-                <button
+                {/* <button
                   className={styles.button__main}
                   onClick={() => signIn("twitter")}
                 >
@@ -126,7 +126,7 @@ export default function Home({
                   onClick={() => signIn("github")}
                 >
                   Sign In with GitHub
-                </button>
+                </button> */}
                 <button
                   className={styles.button__main}
                   onClick={() => signIn("discord")}
