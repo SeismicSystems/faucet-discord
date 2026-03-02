@@ -45,7 +45,6 @@ declare module "next-auth/jwt" {
 }
 
 export const authOptions: NextAuthOptions = {
-  debug: true,
   providers: [
     // Twitter OAuth provider (OAuth 2.0)
     Twitter({
