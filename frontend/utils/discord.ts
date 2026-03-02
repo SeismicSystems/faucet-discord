@@ -11,6 +11,7 @@ let cacheExpiry = 0;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 const MAGNITUDE_REGEX = /^magnitude\s+(\d+(?:\.\d+)?)/i;
+const BYPASS_ROLES = ["administrator", "moderator"];
 
 async function getGuildRoles(): Promise<{ id: string; name: string }[]> {
   if (cachedRoles && Date.now() < cacheExpiry) {
@@ -44,6 +45,17 @@ export async function getDiscordMagnitude(
     ]);
 
     const memberRoleIds: string[] = memberRes.data.roles;
+    const memberRoleIdSet = new Set(memberRoleIds);
+
+    // Allow administrator and moderator roles to bypass magnitude check
+    for (const role of roles) {
+      if (
+        BYPASS_ROLES.includes(role.name.toLowerCase()) &&
+        memberRoleIdSet.has(role.id)
+      ) {
+        return Infinity;
+      }
+    }
 
     // Build a map of role ID -> magnitude value for magnitude roles
     const magnitudeByRoleId = new Map<string, number>();
