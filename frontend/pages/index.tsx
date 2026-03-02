@@ -102,8 +102,9 @@ export default function Home({
             <div className={styles.content__unauthenticated}>
               {/* Reasoning for OAuth */}
               <p>
-                To prevent faucet botting, you must sign in with Twitter/X or
-                GitHub. We request read-only access to verify your account.
+                To prevent faucet botting, you must sign in with Twitter/X,
+                GitHub, or Discord. We request read-only access to verify your
+                account.
               </p>
 
               {/* Sign in buttons */}
@@ -125,6 +126,12 @@ export default function Home({
                   onClick={() => signIn("github")}
                 >
                   Sign In with GitHub
+                </button>
+                <button
+                  className={styles.button__main}
+                  onClick={() => signIn("discord")}
+                >
+                  Sign In with Discord
                 </button>
               </div>
             </div>
@@ -191,7 +198,9 @@ export default function Home({
                   Sign out @
                   {session.provider === "twitter"
                     ? session.twitter_handle
-                    : session.github_username}
+                    : session.provider === "github"
+                      ? session.github_username
+                      : session.discord_username}
                 </button>
               </div>
             </div>
@@ -211,8 +220,10 @@ export default function Home({
           <div className={styles.home__card_content_section}>
             <h4>General Information</h4>
             <p>
-              Sign in with Twitter or GitHub to claim ETH from the faucet. You
-              must have at least 50 Twitter/X followers or 10 Github followers.
+              Sign in with Twitter, GitHub, or Discord to claim ETH from the
+              faucet. Twitter requires 50+ followers, GitHub requires 10+
+              followers. Discord requires membership in the Seismic server with
+              a magnitude role of 5 or higher.
             </p>
             <p className={styles.home__card_content_section_lh}>
               The faucet drips ETH on your configured testnet. Each claim gives
@@ -244,7 +255,11 @@ export async function getServerSideProps(context: any) {
   }
 
   const userId =
-    session.provider === "twitter" ? session.twitter_id : session.github_id;
+    session.provider === "twitter"
+      ? session.twitter_id
+      : session.provider === "github"
+        ? session.github_id
+        : session.discord_id;
 
   // Check if user is whitelisted (same as backend)
   const isWhitelisted = whitelist.includes(userId);

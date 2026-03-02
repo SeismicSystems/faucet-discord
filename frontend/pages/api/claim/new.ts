@@ -18,9 +18,11 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { mainNetwork } from "@/utils/networks";
 import { whitelist, developerList } from "@/utils/whitelist";
+import { getDiscordMagnitude } from "@/utils/discord";
 
 const MIN_TWITTER_FOLLOWERS = 50;
 const MIN_GITHUB_FOLLOWERS = 10;
+const MIN_DISCORD_MAGNITUDE = 5;
 
 // Setup redis and slack clients
 const client = new Redis(process.env.REDIS_URL as string);
@@ -38,12 +40,13 @@ async function postSlackMessage(message: string): Promise<void> {
 type UserTier = "whitelist" | "developer" | "regular";
 
 function generateTxData(recipient: string, tier: UserTier): `0x${string}` {
-  const functionName = tier === "whitelist" 
-    ? "dripWhitelist" 
-    : tier === "developer" 
-      ? "dripDeveloper" 
-      : "drip";
-  
+  const functionName =
+    tier === "whitelist"
+      ? "dripWhitelist"
+      : tier === "developer"
+        ? "dripDeveloper"
+        : "drip";
+
   return encodeFunctionData({
     abi: seismicFaucetAbi,
     functionName,
@@ -141,7 +144,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       ? session.twitter_id
       : session.provider === "github"
         ? session.github_id
-        : null;
+        : session.provider === "discord"
+          ? session.discord_id
+          : null;
 
   console.log(`[claim/new] User ID: ${userId}`);
 
@@ -153,7 +158,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   // Determine user tier
   const isWhitelisted = whitelist.includes(userId);
   const isDeveloper = developerList.includes(userId);
-  const tier: UserTier = isWhitelisted ? "whitelist" : isDeveloper ? "developer" : "regular";
+  const tier: UserTier = isWhitelisted
+    ? "whitelist"
+    : isDeveloper
+      ? "developer"
+      : "regular";
   console.log(`[claim/new] User tier: ${tier}`);
 
   // Validate Twitter followers (skip for whitelisted and developer users)
@@ -172,6 +181,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     if (followerCount < MIN_GITHUB_FOLLOWERS) {
       return res.status(403).send({
         error: `Minimum ${MIN_GITHUB_FOLLOWERS} GitHub followers required. You have ${followerCount}.`,
+      });
+    }
+  }
+
+  // Validate Discord role (skip for whitelisted and developer users)
+  if (tier === "regular" && session.provider === "discord") {
+    const magnitude = await getDiscordMagnitude(session.discord_id!);
+    if (magnitude === null) {
+      return res.status(403).send({
+        error: "You must be a member of the Seismic Discord server to claim.",
+      });
+    }
+    if (magnitude < MIN_DISCORD_MAGNITUDE) {
+      return res.status(403).send({
+        error: `Minimum magnitude of ${MIN_DISCORD_MAGNITUDE} required. Your magnitude is ${magnitude}.`,
       });
     }
   }
@@ -201,7 +225,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   console.log(`[claim/new] Faucet contract: ${faucetAddress}`);
 
   // Generate transaction data based on tier
-  const functionName = tier === "whitelist" ? "dripWhitelist" : tier === "developer" ? "dripDeveloper" : "drip";
+  const functionName =
+    tier === "whitelist"
+      ? "dripWhitelist"
+      : tier === "developer"
+        ? "dripDeveloper"
+        : "drip";
   console.log(`[claim/new] Using function: ${functionName}`);
   const data = generateTxData(address, tier);
 

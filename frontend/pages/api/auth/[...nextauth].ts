@@ -1,6 +1,7 @@
 import NextAuth, { Account, Session, User, NextAuthOptions } from "next-auth"; // Next auth
 import Twitter from "next-auth/providers/twitter"; // Twitter provider
 import GitHub from "next-auth/providers/github"; // GitHub provider
+import Discord from "next-auth/providers/discord"; // Discord provider
 import { JWT } from "next-auth/jwt";
 
 // Extend session type to include custom fields
@@ -17,6 +18,9 @@ declare module "next-auth" {
     github_public_repos?: number;
     github_followers?: number;
     github_created_at?: string;
+    discord_id?: string;
+    discord_username?: string;
+    discord_verified?: boolean;
   }
 }
 
@@ -34,6 +38,9 @@ declare module "next-auth/jwt" {
     github_public_repos?: number;
     github_followers?: number;
     github_created_at?: string;
+    discord_id?: string;
+    discord_username?: string;
+    discord_verified?: boolean;
   }
 }
 
@@ -49,6 +56,11 @@ export const authOptions: NextAuthOptions = {
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID as string,
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+    }),
+    // Discord OAuth provider
+    Discord({
+      clientId: process.env.DISCORD_CLIENT_ID as string,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
     }),
   ],
   // Custom page:
@@ -92,6 +104,13 @@ export const authOptions: NextAuthOptions = {
           token.github_public_repos = githubProfile.public_repos;
           token.github_followers = githubProfile.followers;
           token.github_created_at = githubProfile.created_at;
+        } else if (account?.provider === "discord") {
+          // Attach Discord parameters
+          const discordProfile = profile as any;
+          token.provider = "discord";
+          token.discord_id = account?.providerAccountId;
+          token.discord_username = discordProfile.username;
+          token.discord_verified = discordProfile.verified;
         }
       }
 
@@ -117,6 +136,11 @@ export const authOptions: NextAuthOptions = {
         session.github_public_repos = token.github_public_repos;
         session.github_followers = token.github_followers;
         session.github_created_at = token.github_created_at;
+      } else if (token.provider === "discord") {
+        // Attach Discord params from JWT to session
+        session.discord_id = token.discord_id;
+        session.discord_username = token.discord_username;
+        session.discord_verified = token.discord_verified;
       }
 
       // Return session

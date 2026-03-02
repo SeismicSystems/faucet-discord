@@ -28,7 +28,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     try {
       // Use provider-specific ID for claim tracking
       const userId =
-        session.provider === "twitter" ? session.twitter_id : session.github_id;
+        session.provider === "twitter"
+          ? session.twitter_id
+          : session.provider === "github"
+            ? session.github_id
+            : session.discord_id;
 
       // Check claim status on the main network
       const claimed = await hasClaimed(userId, mainNetwork.name);
