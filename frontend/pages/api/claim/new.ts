@@ -22,7 +22,6 @@ import { getDiscordMagnitude } from "@/utils/discord";
 
 const MIN_TWITTER_FOLLOWERS = 50;
 const MIN_GITHUB_FOLLOWERS = 10;
-const MIN_DISCORD_MAGNITUDE = 5;
 
 // Setup redis and slack clients
 const client = new Redis(process.env.REDIS_URL as string);
@@ -193,9 +192,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         error: "You must be a member of the Seismic Discord server to claim.",
       });
     }
-    if (magnitude < MIN_DISCORD_MAGNITUDE) {
+    if (magnitude === 0) {
       return res.status(403).send({
-        error: `Minimum magnitude of ${MIN_DISCORD_MAGNITUDE} required. Your magnitude is ${magnitude}.`,
+        error:
+          "You must have a magnitude role in the Seismic Discord server to claim.",
       });
     }
   }
