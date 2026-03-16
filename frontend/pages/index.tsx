@@ -102,8 +102,9 @@ export default function Home({
             <div className={styles.content__unauthenticated}>
               {/* Reasoning for OAuth */}
               <p>
-                To prevent faucet botting, you must sign in with Discord and have a magnitude role of 5 or higher. We request read-only access to verify your
-                account.
+                To prevent faucet botting, you must sign in with Discord and
+                have a magnitude role. We request read-only access to verify
+                your account.
               </p>
 
               {/* Sign in buttons */}
@@ -219,9 +220,8 @@ export default function Home({
           <div className={styles.home__card_content_section}>
             <h4>General Information</h4>
             <p>
-              Sign in with Discord to claim ETH from the
-              faucet. Discord requires membership in the Seismic server with
-              a magnitude role of 5 or higher.
+              Sign in with Discord to claim ETH from the faucet. Discord
+              requires membership in the Seismic server with a magnitude role.
             </p>
             <p className={styles.home__card_content_section_lh}>
               The faucet drips ETH on your configured testnet. Each claim gives
